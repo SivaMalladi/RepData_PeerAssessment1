@@ -108,7 +108,7 @@ updated_activity_by_datetype$steps <- round(updated_activity_by_datetype$steps, 
 
 library(ggplot2) 
 g<- ggplot(updated_activity_by_datetype, aes(x=interval, y=steps, color = datetype))+geom_line()
-g<- g+labs(title="Avg.Daily Steps by Datetype", x="Interval", y= 'Avg.no. of Steps') + facet_wrap(~datetype, nrow=1,  ncol = 2)
+g<- g+labs(title="Avg.Daily Steps by Datetype", x="Interval", y= 'Avg.no. of Steps') + facet_wrap(~datetype, nrow=2,  ncol = 1)
 plot(g)
 
 ```
