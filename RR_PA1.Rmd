@@ -1,0 +1,119 @@
+#Reproducible Research - Project Assignment 1  
+____________________________________________  
+##Introduction
+This document shows the  use of RMarkdown for generating documentation embededed with R code
+
+#### Step 1:  Read the input file activity.csv, change the date variable to Date type and add new column weekday name  
+
+``` {r echo =TRUE }
+activity <- read.csv("./data/activity.csv", header = TRUE, stringsAsFactors = FALSE)
+activity$date <- as.Date(activity$date, "%Y-%m-%d")
+activity$weekday <- weekdays(activity$date)
+str(activity)
+head(activity)
+```
+
+####Step 2:  Sum up steps taken for each day and plot a historgram
+
+``` {r echo =TRUE}  
+
+steps_per_day <- with(activity, aggregate(steps, by =list(date),FUN = sum,  na.rm=TRUE))
+names(steps_per_day)= c("date" , "steps"  )
+plot(steps_per_day$steps, type = "h", lwd = 2,main = " Steps Per Day", xlab = "Days", ylab = "Steps" )
+
+```
+
+
+####Step 3:  Calculate  the median and mean of steps taken each day
+
+``` {r echo=TRUE}
+mean_steps_perday   <- mean(activity$steps,na.rm = TRUE)
+median_steps_perday <- median(activity$steps,na.rm = TRUE)
+mean_steps_perday
+median_steps_perday
+
+```
+
+####Step 4:  Calucate average number of steps taken per 5min-interval for all days and plot time series(line) graph  
+
+``` {r echo=TRUE}  
+meansteps_per_interval <- with(activity, aggregate(steps, by =list(interval),FUN = mean,  na.rm=TRUE))
+names(meansteps_per_interval)= c("interval" , "meansteps"  )
+with(meansteps_per_interval, plot(interval, meansteps, type = "l", lwd = 2,main = " Mean Steps per Interval", xlab = "Interval", ylab = "MeanSteps" ))
+
+```  
+
+####step 5: Find out interval that has highest average steps of 5min-interval across all days  
+
+``` {r echo=TRUE}  
+meansteps_per_interval$interval[which.max(meansteps_per_interval$meansteps)]
+
+```   
+
+####Step 6: Imputing missing values of steps vairable   
+            Find the total number of missing values for steps variable   
+
+``` {r echo = TRUE}
+sum(!complete.cases(activity))
+
+```   
+
+            Create newdatset from activity dataset and replace the null steps variable with interval mean. The updated values of missing steps variable is rounded to nearest integer 
+            Plot the histogram with newly created datset for steps taken daily
+            Calculate the new mean and median valus for the newly created dataset
+            
+```  {r echo = TRUE}   
+updated_activity<- transform(activity, steps = ifelse(is.na(activity$steps),round(meansteps_per_interval$meansteps[match(activity$interval,meansteps_per_interval$interval)],digits = 0),activity$steps ))  
+
+head(updated_activity,20)
+
+updated_steps_per_day <- with(updated_activity, aggregate(steps, by =list(date),FUN = sum,  na.rm=TRUE))
+names(updated_steps_per_day)= c("date" , "steps"  )
+
+
+plot(steps_per_day$steps, type = "h", col = "blue", lwd = 2,main = " Steps Per Day", xlab = "Days", ylab = "Steps" )
+
+lines(updated_steps_per_day$steps, type = "h", col = "red", lwd = 2,main = " Steps Per Day", xlab = "Days", ylab = "Steps" )
+
+legend("topright", c("Updated", "Original"), col=c("red", "blue"), lwd=10)
+
+updated_mean_steps_perday   <- mean(updated_activity$steps,na.rm = TRUE)
+updated_median_steps_perday <- median(updated_activity$steps,na.rm = TRUE)
+updated_mean_steps_perday
+updated_median_steps_perday
+
+```   
+               Differences in mean, median and totla steps  between newly createded dataset and the orignal one  
+``` {r echo = TRUE}
+diff_mean <- updated_mean_steps_perday - mean_steps_perday
+diff_median<- updated_median_steps_perday - median_steps_perday
+diff_totalsteps <- sum(updated_activity$steps,na.rm = TRUE) - sum(activity$steps, na.rm = TRUE)
+
+diff_mean
+diff_median
+diff_totalsteps
+
+```
+####Step 7: Differeces in activity pattern in weekdays and weekends   
+            Create datetype filed fillit it Weekday or Weekend based on Weekday  
+            Load ggplot2 package and plot the graphs for Avg.Daily Steps for Weekday and Weekend
+``` {r echo = TRUE}
+
+ updated_activity$datetype[(updated_activity$weekday=="Sunday"|updated_activity$weekday=="Saturday")]<-"Weekend"
+
+updated_activity$datetype[(updated_activity$weekday!="Sunday"&updated_activity$weekday!="Saturday")]<-"Weekday"
+updated_activity_by_datetype <-aggregate(steps~interval + datetype,updated_activity, mean, na.rm = TRUE)
+
+updated_activity_by_datetype$steps <- round(updated_activity_by_datetype$steps, digits = 2)
+
+library(ggplot2) 
+g<- ggplot(updated_activity_by_datetype, aes(x=interval, y=steps, color = datetype))+geom_line()
+g<- g+labs(title="Avg.Daily Steps by Datetype", x="Interval", y= 'Avg.no. of Steps') + facet_wrap(~datetype, nrow=1,  ncol = 2)
+plot(g)
+
+```
+
+##     End of the Script   ####
+
+
+
